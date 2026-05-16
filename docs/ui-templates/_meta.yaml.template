@@ -1,0 +1,104 @@
+# UI Template Metadata Template
+# Copy to: docs/ui-templates/{page}/{PREFIX}-UI-{NNN}_meta.yaml
+# Replace all {PLACEHOLDER} values
+# RULE: every version reference MUST have a corresponding _doc path — no naked version numbers
+
+template_version: "{PREFIX}-UI-001"       # e.g. JOB-UI-009
+created: "YYYY-MM-DD"
+status: LIVE                               # LIVE / STAGING / REVERTED / ARCHIVED / SUPERSEDED
+sha256: "{sha256_of_snapshot_file}"        # sha256sum of the *_full.html snapshot file
+supersedes: null                           # e.g. JOB-UI-008
+superseded_by: null                        # filled when a newer version is created
+
+# ─── 快照建立時的環境與程式碼版本（必填，否則無法對應當時狀態）──────────────
+# RULE: This records WHICH environment and codebase state this UI was taken from.
+#       Future readers must be able to checkout the exact commit and reproduce.
+snapshot_context:
+  environment: production   # dev | staging | production
+  app_version: "v0.0.0"    # from VERSION file (e.g. v0.13.0)
+  git_commit: "xxxxxxx"    # git rev-parse --short HEAD at snapshot time
+  git_branch: "main"       # branch name at snapshot time
+  taken_by: "MSI-P16"      # device: MSI-P16 | MT-N071 | MSI-ST16
+  note: ""                  # optional: "pre-deploy" / "post-hotfix" / etc.
+
+# Framework (required — determines verify_ui_snapshot.py behavior)
+framework: flask-jinja2   # flask-jinja2 | react-vite | vue | next | none
+
+# Jinja2 only (skip for React/Vue)
+jinja_inherits: base.html  # or null if standalone (e.g. login.html, base.html)
+base_version: "BSE-UI-001"
+
+# ─── DB Migration 版本對照（必須提供路徑，否則無法追溯）────────────────────
+# RULE: every version number MUST have a _doc path pointing to the actual file
+db_migration:
+  minimum_version: V001
+  minimum_version_doc: docs/migrations/V001__init_5tables.sql   # actual migration file
+  snapshot_version: V001
+  snapshot_version_doc: docs/migrations/V001__init_5tables.sql  # or agent-report if V>max_migration
+  full_schema_doc: docs/DB_SCHEMA.md                            # living schema document
+
+# ─── DB 欄位依賴（每個欄位必含 template_line + field_since_doc）────────────
+# RULE: field_since must reference a migration file or agent-report, NOT a UI version
+db_dependencies:
+  - table: {table_name}
+    table_since: V001
+    table_doc: docs/migrations/V001__init_5tables.sql   # REQUIRED: path to migration
+
+    fields:
+      - name: {field_name}
+        type: VARCHAR(50)           # SQL type
+        field_since: V001           # migration version that added this field
+        field_since_doc: docs/migrations/V001__init_5tables.sql  # REQUIRED: path
+        allowed_values: []          # for ENUM-like fields (empty = not restricted)
+        used_in: [component-name]   # semantic label matching template component
+        template_line: 0            # REQUIRED: line number in templates/{page}.html
+        note: ""                    # explain Jinja2 expression or special behaviors
+
+      # Computed fields (from JOINs or CTEs) use a different structure:
+      # - name: COUNT(id) AS block_count
+      #   type: computed
+      #   computed_from: "LEFT JOIN content_blocks b ON b.job_id = j.id / COUNT(b.id)"
+      #   field_since: V005
+      #   query_doc: code/app.py    # function that generates this value
+      #   used_in: [block-count-display]
+      #   template_line: 0
+      #   note: "{{ job.block_count }} 個"
+
+# ─── API 依賴────────────────────────────────────────────────────────────────
+api_dependencies:
+  - route: "/{path}"
+    method: GET
+    handler: code/app.py            # REQUIRED: path to the Flask route function
+    required_response_fields: []    # template variables passed from Flask route
+    query_note: ""                  # any special JOIN/CTE requirements
+
+# ─── JS 依賴─────────────────────────────────────────────────────────────────
+# RULE: all versions must be pinned (no floating @3.x.x)
+js_dependencies:
+  - alpine.js@3.13.5
+  # - marked.js@9.1.6
+  # - dompurify@3.0.6
+
+css_dependencies:
+  # - tailwindcss@cdn   # WARNING: not pinned — known risk
+
+# ─── 本版 vs 上版差異摘要（新增欄位必列）──────────────────────────────────
+changes_from_previous:
+  added_fields: []     # list: "field_name (used_in, line N)"
+  removed_fields: []
+  layout: []           # describe structural/layout changes
+
+# ─── 需求來源與溝通紀錄（每一次版本必填）──────────────────────────────────
+# RULE: Every new version must document WHY it was created.
+#       Record the original requirement, any examples provided, and the decision made.
+#       Without this, future readers cannot understand the intent behind the change.
+change_request:
+  requested_at: "YYYY-MM-DD HH:MM"   # UTC+8
+  requested_by: "user"               # user | planner | auto-detect
+  requirement: |
+    （用戶原始需求文字，盡量照原文保留）
+  examples_provided: |
+    （用戶提供的範例、截圖說明、樣式參考 — 若無則填 null）
+  design_decision: |
+    （採用的設計方案 + 原因，若有多方案比較也記錄）
+  discussion_ref: ""   # 對話視窗日期/session ID，方便未來查找原始對話

@@ -1,0 +1,15 @@
+services:
+  app{XX}:
+    build: .
+    container_name: app{XX}
+    ports:
+      - "3{XX}:3{XX}"
+    env_file: .env
+    volumes:
+      - /opt/shared:/opt/shared:rw   # LINE 搭便車通知
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3{XX}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

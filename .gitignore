@@ -1,0 +1,54 @@
+# Environment (NEVER commit private keys)
+.env
+.env.*
+.env.local
+
+# Node.js / Scaffold-ETH 2
+node_modules/
+.next/
+out/
+dist/
+cache/
+artifacts/
+typechain-types/
+
+# Hardhat
+dapp/packages/hardhat/.env
+dapp/packages/nextjs/.env.local
+
+# Python (legacy from template)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Tests
+.pytest_cache/
+tests/inspection/*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spectra app data
+.spectra/
+
+# yarn
+.yarn/cache
+.pnp.*
+openspec/.vector-search.db*
+
+# Temp build backup (local only)
+_code_backup/
+
+# Scaffold-ETH 2 build artifacts
+dapp/.yarn/cache
+dapp/.yarn/install-state.gz
+dapp/packages/nextjs/.next/
+dapp/packages/hardhat/cache/
+dapp/packages/hardhat/artifacts/
+dapp/packages/hardhat/typechain-types/
