@@ -1,15 +1,13 @@
 ﻿"use client";
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { formatEther, parseEventLogs } from "viem";
+import { formatEther } from "viem";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-import { usePublicClient } from "wagmi";
 
 export default function MintPage() {
   const [tokenURI, setTokenURI] = useState("");
   const [mintedTokenId, setMintedTokenId] = useState<bigint | null>(null);
   const { isConnected } = useAccount();
-  const publicClient = usePublicClient();
 
   const { data: mintPrice } = useScaffoldReadContract({
     contractName: "MyNFT",
@@ -26,32 +24,14 @@ export default function MintPage() {
   const handleMint = async () => {
     try {
       setMintedTokenId(null);
-      const hash = await writeContractAsync({
+      await writeContractAsync({
         functionName: "mint",
         args: [tokenURI],
         value: mintPrice,
       });
-
-      if (hash && publicClient) {
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        // 我們需要合約的 ABI 來解析日誌。
-        // 在 Scaffold-ETH 2 中，這通常可以從全局變量或生成的 hooks 中獲取。
-        // 為了保持簡單且符合指示，我們假設可以使用 parseEventLogs。
-        // 注意：這裡省略了完整的 ABI 導入，實際環境中應從 generated 獲取。
-        const logs = parseEventLogs({
-          eventName: 'NFTMinted',
-          logs: receipt.logs,
-          // 這裡應該傳入 ABI，但在這個 context 下我們先用 totalSupply 估算或從 event 中提取
-        });
-        
-        if (logs.length > 0) {
-          setMintedTokenId((logs[0] as any).args.tokenId);
-        } else {
-          // Fallback: 如果解析失敗，使用目前的 totalSupply 作為估算
-          if (totalSupply !== undefined) {
-            setMintedTokenId(totalSupply + 1n);
-          }
-        }
+      // Use totalSupply as the minted tokenId (tokens start at 1, incremented before mint)
+      if (totalSupply !== undefined) {
+        setMintedTokenId(totalSupply + 1n);
       }
     } catch (e) {
       console.error("Mint failed:", e);
